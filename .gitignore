@@ -143,3 +143,6 @@ vite.config.ts.timestamp-*
 .vite/
 # IDE
 .idea/
+
+# Markdown
+*.md
