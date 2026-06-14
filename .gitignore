@@ -149,3 +149,7 @@ vite.config.ts.timestamp-*
 
 # Alloy output
 receipt.json
+
+# Playwright output
+.last-run.json
+test-results/
