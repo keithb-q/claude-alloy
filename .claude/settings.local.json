@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(/Users/llm/IdeaProjects/claude-alloy/bin/run-alloy.sh *)",
+      "Bash(/usr/libexec/java_home -v 26)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) /Users/llm/IdeaProjects/claude-alloy/bin/run-alloy.sh /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)"
+    ]
+  }
+}
