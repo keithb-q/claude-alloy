@@ -44,7 +44,28 @@
       "Bash(grep -v \"^$\")",
       "Bash(git stash *)",
       "Bash(git branch *)",
-      "Bash(git reset *)"
+      "Bash(git reset *)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) bin/run-alloy.sh specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) bin/run-alloy.sh -f specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f -t text -c \"check KnownItemGets200\" specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f -o - -t text -c \"check KnownItemGets200\" /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f -o - -t json -c \"check KnownItemGets200\" /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f -o /tmp/alloy-out -t json -c \"check KnownItemGets200\" /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f -o /tmp/alloy-out -c \"check KnownItemGets200\" /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)",
+      "Bash(echo \"exit: $?\")",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); [print\\(json.dumps\\(c, indent=2\\)\\) for c in d.get\\('commands',[]\\) if 'KnownItem' in c.get\\('name',''\\)]\")",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)",
+      "Bash(python3 -c ' *)",
+      "Bash(python3 *)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f -n -c \"check KnownItemGets200\" /Users/llm/IdeaProjects/claude-alloy/specification/alloy/stock.als)",
+      "Bash(cat)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -f /tmp/stock-debug.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -o /tmp/debug-out -f /tmp/stock-debug.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -o /tmp/debug-out2 -f /tmp/stock-debug2.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -o /tmp/debug-out3 -f /tmp/stock-debug3.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -o /tmp/debug-out4 -f /tmp/stock-debug4.als)",
+      "Bash(JAVA_HOME=$\\(/usr/libexec/java_home -v 26\\) java -jar /Applications/Alloy.app/Contents/Resources/org.alloytools.alloy.dist.jar exec -o /tmp/debug-out5 -f /tmp/stock-debug5.als)"
     ]
   }
 }
