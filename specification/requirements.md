@@ -1,10 +1,6 @@
 # Stock Control
 A back-end-for-front-end web service for knowing how much stuff you've got.
 
-## Architectural Constraints
-1. Command-query separation
-2. Strong ReSTful design: prefer meaningful URIs
-
 # Stories
 1. Stock level
 * To know the stock level of an item search using the UPC-E of the item like this: `GET` `…/stock/level/123456`
