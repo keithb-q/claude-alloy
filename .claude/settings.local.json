@@ -26,7 +26,8 @@
       "Bash(cat)",
       "Read(//Users/llm/**)",
       "Read(//Library/Java/JavaVirtualMachines/**)",
-      "Read(//tmp/**)"
+      "Read(//tmp/**)",
+      "WebFetch(domain:haslab.github.io)"
     ]
   }
 }

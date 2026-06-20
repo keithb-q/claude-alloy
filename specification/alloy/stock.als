@@ -1,9 +1,10 @@
 module stock
 
--- UPC-E barcode used to identify items in queries
 sig UpcE {}
 
--- A stock receipt: a quantity of a UPC-E added to stock
+-- All transactions that could ever occur live in a static pool.
+-- RecordedPurchase and RecordedSale are the subsets that have actually been
+-- posted to the API; both grow monotonically as events arrive.
 sig Purchase {
     upc      : one UpcE,
     quantity : one Int
@@ -11,7 +12,6 @@ sig Purchase {
     quantity > 0
 }
 
--- A stock issue: a quantity of a UPC-E removed from stock
 sig Sale {
     upc      : one UpcE,
     quantity : one Int
@@ -19,42 +19,68 @@ sig Sale {
     quantity > 0
 }
 
--- UpcEs that have appeared in at least one transaction
+var sig RecordedPurchase in Purchase {}
+var sig RecordedSale     in Sale     {}
+
+-- HTTP response infrastructure
+
+abstract sig Status {}
+one sig HTTP_200 extends Status {}
+one sig HTTP_404 extends Status {}
+
+sig StockLevelResponse {
+    status   : one Status,
+    quantity : lone Int
+}
+
+-- Derived state (evaluated against the current ledger at each time step)
+
 fun knownItems : set UpcE {
-    Purchase.upc + Sale.upc
+    RecordedPurchase.upc + RecordedSale.upc
 }
 
--- All purchases for a given UpcE
 fun purchasesFor[u: UpcE] : set Purchase {
-    { p : Purchase | p.upc = u }
+    { p : RecordedPurchase | p.upc = u }
 }
 
--- All sales for a given UpcE
 fun salesFor[u: UpcE] : set Sale {
-    { s : Sale | s.upc = u }
+    { s : RecordedSale | s.upc = u }
 }
 
--- Current level: sum of received minus sum of issued, initial value 0
--- minus[] is used explicitly because - between sum expressions is set difference in Alloy
+-- minus[] is required: - between sum expressions is set difference in Alloy
 fun stockLevel[u: UpcE] : Int {
     minus[(sum p : purchasesFor[u] | p.quantity),
           (sum s : salesFor[u]     | s.quantity)]
 }
 
--- HTTP response status codes used by this API
-abstract sig Status {}
-one sig HTTP_200 extends Status {}
-one sig HTTP_404 extends Status {}
+-- Initial state: nothing has been posted yet
 
--- Response document for a stock level query
-sig StockLevelResponse {
-    status   : one Status,
-    quantity : lone Int       -- absent on 404
+fact init {
+    no RecordedPurchase
+    no RecordedSale
 }
 
--- Story 1: GET …/stock/level/{upc}
--- Pure query; no state is modified (CQS)
+-- Events at the system boundary
+-- Each predicate names the guard and the full frame on the ledger state.
+
+-- Story 2: POST /stock/purchase/{upc}
+pred recordPurchase[p: Purchase] {
+    p not in RecordedPurchase
+    RecordedPurchase' = RecordedPurchase + p
+    RecordedSale'     = RecordedSale
+}
+
+-- Story 3: POST /stock/sale/{upc}
+pred recordSale[s: Sale] {
+    s not in RecordedSale
+    RecordedPurchase' = RecordedPurchase
+    RecordedSale'     = RecordedSale + s
+}
+
+-- Story 1: GET /stock/level/{upc}  (pure query — no state change)
 pred queryStockLevel[u: UpcE, r: StockLevelResponse] {
+    RecordedPurchase' = RecordedPurchase
+    RecordedSale'     = RecordedSale
     (u in knownItems) => {
         r.status   = HTTP_200
         r.quantity = stockLevel[u]
@@ -64,44 +90,85 @@ pred queryStockLevel[u: UpcE, r: StockLevelResponse] {
     }
 }
 
--- Story 2: POST …/stock/purchase/{upc}
--- Records receipt of stock; increases level
-pred recordPurchase[u: UpcE, qty: Int] {
-    qty > 0
-    some p : Purchase | p.upc = u and p.quantity = qty
+pred stutter {
+    RecordedPurchase' = RecordedPurchase
+    RecordedSale'     = RecordedSale
 }
 
--- Story 3: POST …/stock/sale/{upc}
--- Records issue of stock; decreases level
-pred recordSale[u: UpcE, qty: Int] {
-    qty > 0
-    some s : Sale | s.upc = u and s.quantity = qty
+-- Every step is one of the four events above
+
+fact traces {
+    always (
+        stutter
+        or (some p: Purchase | recordPurchase[p])
+        or (some s: Sale     | recordSale[s])
+        or (some u: UpcE, r: StockLevelResponse | queryStockLevel[u, r])
+    )
 }
 
--- A known item returns 200 with its current level
+-- Event depiction idiom
+-- Derived relations that make the active event visible in the visualiser.
+
+enum Evt { Stutter, RecordPurchase, RecordSale, QueryStockLevel }
+
+fun stutter_evt : set Evt {
+    { e: Stutter | stutter }
+}
+
+fun recordPurchase_evt : Evt -> Purchase {
+    { e: RecordPurchase, p: Purchase | recordPurchase[p] }
+}
+
+fun recordSale_evt : Evt -> Sale {
+    { e: RecordSale, s: Sale | recordSale[s] }
+}
+
+fun queryStockLevel_evt : Evt -> UpcE {
+    { e: QueryStockLevel, u: UpcE | some r: StockLevelResponse | queryStockLevel[u, r] }
+}
+
+fun events : set Evt {
+    stutter_evt
+    + recordPurchase_evt.Purchase
+    + recordSale_evt.Sale
+    + queryStockLevel_evt.UpcE
+}
+
+-- Assertions
+
 assert KnownItemGets200 {
-    all u: UpcE, r: StockLevelResponse |
+    always (all u: UpcE, r: StockLevelResponse |
         (u in knownItems and queryStockLevel[u, r]) =>
-            (r.status = HTTP_200 and one r.quantity)
+            (r.status = HTTP_200 and one r.quantity))
 }
 
--- An unknown item returns 404 with no body
 assert UnknownItemGets404 {
-    all u: UpcE, r: StockLevelResponse |
+    always (all u: UpcE, r: StockLevelResponse |
         (u not in knownItems and queryStockLevel[u, r]) =>
-            (r.status = HTTP_404 and no r.quantity)
+            (r.status = HTTP_404 and no r.quantity))
 }
 
--- Recording a purchase makes the item known
-assert PurchaseMakesKnown {
-    all u: UpcE, qty: Int |
-        recordPurchase[u, qty] => u in knownItems
+-- Recording a purchase increases the level for its UpcE by exactly the purchase quantity.
+-- lvl captures the level in the current state so it can be compared across the transition.
+assert PurchaseIncreasesLevel {
+    always (all p: Purchase, lvl: Int |
+        (recordPurchase[p] and stockLevel[p.upc] = lvl) =>
+            after (stockLevel[p.upc] = plus[lvl, p.quantity]))
 }
 
-check KnownItemGets200   for 4
-check UnknownItemGets404 for 4
-check PurchaseMakesKnown for 4
+-- Recording a sale decreases the level for its UpcE by exactly the sale quantity.
+assert SaleDecreasesLevel {
+    always (all s: Sale, lvl: Int |
+        (recordSale[s] and stockLevel[s.upc] = lvl) =>
+            after (stockLevel[s.upc] = minus[lvl, s.quantity]))
+}
 
-run queryStockLevel for 3
-run recordPurchase  for 3
-run recordSale      for 3
+check KnownItemGets200       for 3 but 5 steps
+check UnknownItemGets404     for 3 but 5 steps
+check PurchaseIncreasesLevel for 3 but 5 steps
+check SaleDecreasesLevel     for 3 but 5 steps
+
+run { eventually some p: Purchase | recordPurchase[p] }   for 3 but 5 steps
+run { eventually some s: Sale     | recordSale[s] }       for 3 but 5 steps
+run { eventually (some u: UpcE, r: StockLevelResponse |
+      u in knownItems and queryStockLevel[u, r]) }         for 3 but 5 steps
