@@ -153,3 +153,11 @@ receipt.json
 # Playwright output
 .last-run.json
 test-results/
+
+# IntelliJ plugin build output
+intellij-alloy-plugin/build/
+intellij-alloy-plugin/.gradle/
+
+# Playwright output
+.last-run.json
+test-results/
