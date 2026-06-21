@@ -60,6 +60,13 @@ fact init {
     no RecordedSale
 }
 
+-- Scope guard: with for-3 scope and 5-bit Int (max 15), three atoms × 4 = 12 ≤ 15.
+-- Without this, the solver picks quantities that overflow sum[], producing spurious counterexamples.
+fact quantityBound {
+    all p: Purchase | p.quantity <= 4
+    all s: Sale     | s.quantity <= 4
+}
+
 -- Events at the system boundary
 -- Each predicate names the guard and the full frame on the ledger state.
 
@@ -163,12 +170,12 @@ assert SaleDecreasesLevel {
             after (stockLevel[s.upc] = minus[lvl, s.quantity]))
 }
 
-check KnownItemGets200       for 3 but 5 steps
-check UnknownItemGets404     for 3 but 5 steps
-check PurchaseIncreasesLevel for 3 but 5 steps
-check SaleDecreasesLevel     for 3 but 5 steps
+check KnownItemGets200       for 3 but 5 Int, 5 steps
+check UnknownItemGets404     for 3 but 5 Int, 5 steps
+check PurchaseIncreasesLevel for 3 but 5 Int, 5 steps
+check SaleDecreasesLevel     for 3 but 5 Int, 5 steps
 
-run { eventually some p: Purchase | recordPurchase[p] }   for 3 but 5 steps
-run { eventually some s: Sale     | recordSale[s] }       for 3 but 5 steps
+run { eventually some p: Purchase | recordPurchase[p] }   for 3 but 5 Int, 5 steps
+run { eventually some s: Sale     | recordSale[s] }       for 3 but 5 Int, 5 steps
 run { eventually (some u: UpcE, r: StockLevelResponse |
-      u in knownItems and queryStockLevel[u, r]) }         for 3 but 5 steps
+      u in knownItems and queryStockLevel[u, r]) }         for 3 but 5 Int, 5 steps
